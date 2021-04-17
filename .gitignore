@@ -1,2 +1,4 @@
 swarmlab-hybrid
 node_modules
+cloudsim*
+*.docx
