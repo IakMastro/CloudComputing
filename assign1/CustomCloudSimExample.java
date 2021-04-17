@@ -83,7 +83,7 @@ public class CustomCloudSimExample {
             // Initialize the CloudSim library
             CloudSim.init(num_user, calendar, trace_flag);
 
-//            var globalBroker = new CloudSimExample8.GlobalBroker("GlobalBroker");
+            var globalBroker = new CloudSimExample8.GlobalBroker("GlobalBroker");
 
             // Second step: Create Datacenters
             //Datacenters are the resource providers in CloudSim. We need at list one of them to run a CloudSim simulation
@@ -107,7 +107,7 @@ public class CustomCloudSimExample {
             CloudSim.startSimulation();
 
             var newList = broker.getCloudletReceivedList();
-//            newList.addAll(globalBroker.getBroker().getCloudletReceivedList());
+            newList.addAll(globalBroker.getBroker().getCloudletReceivedList());
 
             CloudSim.stopSimulation();
 
