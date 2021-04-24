@@ -1,4 +1,7 @@
 swarmlab-hybrid
 node_modules
-cloudsim*
 *.docx
+*.pdf
+.attach_*
+out
+.idea
