@@ -8,7 +8,7 @@ object WordCount
     {
         val conf = new SparkConf().setAppName("WordCount").setMaster("local")
 
-		val sc = new SparkContext(conf)
+	val sc = new SparkContext(conf)
 
         val input = sc.textFile("file://" + System.getProperty("user.dir") + "/data/simple_text.txt")
 
