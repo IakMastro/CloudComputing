@@ -1,18 +1,32 @@
-# Hadoop
+= Υπολογιστική Νέφους και Υπηρεσίες
+:toc:
+:toc-title:
+:source-highlighter: rouge
+:source-language: java
+
+.ΕΡΓΑΣΙΑ 2 ΜΕΡΟΣ Α: Hadoop
+[NOTE]
+****
+[.text-center]
+Το πρώτο μέρος της δεύτερης εργασίας του μαθήματος "Υπολογιστική Νέφους και Υπηρεσίες" βασισμένο στην τεχνολόγια "Hadoop" της Apache
+****
+
+== Εισαγωγή στο Hadoop
 
 image:img/hadoop.png[Hadoop Logo]
 
 Το Hadoop είναι ένα framework χρήσιμο για την ανάπτυξη κατανεμημένης επεξεργασίας μέσα από ένα cluster υπολογιστών χρησιμοποιώντας απλά προγραμματιστικά μοντέλα. Έχει σχεδιαστεί με τέτοιον τρόπο ώστε να μπορεί να προσαρμόζεται να δουλεύει είτε από έναν server είτε σε χιλιάδες μηχανάκια.
 
-## WCount (TF)
+== WCount (TF)
 
 Ένα κλασσικό παράδειγμα είναι το WCount, το όποιο μετράει πόσες φόρες εμφανίζεται κάθε όρος μέσα στα έγγραφα. Στην ανάκτηση πληροφορίας, αυτό ονομάζεται tf. Το MapReduce είναι χωρισμένο σε τρία τμήματα κώδικα. Στην κλάση του mapper, στην κλάση του reducer και τέλος σε έναν runner. Αυτό το μοντέλο ονομάζεται MapReducer.
 
-### Mapper
+=== Mapper
 
 Το πρώτο στάδιο του hadoop είναι πάντα το Mapper.
 
-```java
+[source]
+--
 public class TFMapper extends MapReduceBase
         implements Mapper<LongWritable, Text, Text, IntWritable> {
     private final static IntWritable one = new IntWritable(1);
@@ -32,15 +46,16 @@ public class TFMapper extends MapReduceBase
         }
     }
 }
-```
+--
 
 Το Mapper ουσιαστικά αντιστοιχεί keywords με values, όπως και άλλες υλοποίησης της δομής Map (για παράδειγμα το HashMap της Java, το Dictionary της Python και το JSON της Javascript). Σε αυτή την περίπτωση, αντιστοιχούμενες τιμές είναι ένα Text με ένα IntWritable. Και τα δύο είναι classes του Hadoop.
 
-### Reducer
+=== Reducer
 
 Το δεύτερο στάδιο του Hadoop είναι το Reducer.
 
-```java
+[source]
+--
 public class TFReducer extends MapReduceBase
         implements Reducer<Text, IntWritable, Text, IntWritable> {
     @Override
@@ -57,45 +72,50 @@ public class TFReducer extends MapReduceBase
         outputCollector.collect(text, new IntWritable(sum));
     }
 }
-```
+--
 
 To Reducer διαβάζει κάθε key αυτόματα και παίρνει τις τιμές του, κάνει κάποιους υπολογίσιμους και γράφει στο output αρχείο το τελικό αποτέλεσμα. Στο παράδειγμα του wcount, μετράει τις λέξεις που έγιναν map. Δηλαδή εάν η λέξη "up" εμφανίζεται τρεις φόρες στο κείμενο, θα γράψει στο output "up 3".
 
-### Runner
+=== Runner
 
 Ο runner δεν είναι ακριβώς στάδιο του Hadoop, άλλα πιο πολύ μία configuration κλάση, που δηλώνει ο προγραμματιστής στο MapReduce ποιες κλάσεις να χρησιμοποιηθούν, ποιος ο τρόπος εγγραφής στο τελικό έγγραφο, κτλ.
 Στην αρχή, γίνεται αρχικοποίηση του configuration. Δηλώνεται ότι το configuration βρίσκεται στην κλάση του TFRunner και το όνομα του job είναι tf.
 
-```java
+[source]
+--
 var conf = new JobConf(TFRunner.class);
 conf.setJobName("tf");
-```
+--
 
 Στη συνέχεια, δηλώνεται ότι τα δεδομένα που θα γραφτούν στο αρχείο εξόδου θα είναι Text και IntWritable. Αυτά, αντιστοιχίζονται με τον Reducer, αφού αυτός είναι υπεύθυνος για την εγγραφή στο αρχείο εξόδου.
 
-```java
+[source]
+--
 conf.setOutputKeyClass(Text.class);
 conf.setOutputValueClass(IntWritable.class);
-```
+--
 
 Επιπρόσθετα, δηλώνονται ποιες είναι οι κλάσεις του Mapper και του Reducer, όπως και του Combiner. Στην περίπτωση του WCount ενδέχεται να μη χρησιμεύει το Combiner.
 
-```java
+[source]
+--
 conf.setMapperClass(TFMapper.class);
 conf.setCombinerClass(TFReducer.class);
 conf.setReducerClass(TFReducer.class);
-```
+--
 
 Τέλος, δηλώνονται τα formats των αρχείων εισόδου και εξόδου. Και στις δύο περιπτώσεις, είναι Text, εφόσον φορτώνουν απλά εγγράφου (.txt για παράδειγμα, ή από το hdfs://localhost:9870. Περισσότερα στα ενδεικτικά τρεξίματα).
 
-```java
+[source]
+--
 conf.setInputFormat(TextInputFormat.class);
 conf.setOutputFormat(TextOutputFormat.class);
-```
+--
 
 Εφόσον, το configuration του Runner είναι έτοιμο, το μόνο που λείπει να γίνει είναι να του δωθεί το path των αρχείων είσοδο και το path του αρχείου εξόδου. Ο ολοκληρωμένος κώδικας του Runner είναι ο εξής:
 
-```java
+[source]
+--
 public class TFRunner {
     public static void main(String[] args) {
         var conf = new JobConf(TFRunner.class);
@@ -126,36 +146,39 @@ public class TFRunner {
         }
     }
 }
-```
+--
 
-### Ενδεικτικά τρεξίματα
+=== Ενδεικτικά τρεξίματα
 
 Για τα ενδεικτικά τρεξίματα, θα χρησιμοποιήσει το εξής απλό αρχείο 6 λέξεων:
 
-```text
+[source,text]
+--
 hi bye hi three three three
-```
+--
 
 Σαφέστατα, στο αρχείο εξόδου, πρέπει να εμφανίζει το hi 2, bye 1 και three 3.
 Εκτελώντας το αρχείο, επιστρέφονται τα εξής αποτελέσματα.
 
-```text
+[source,text]
+--
 bye	1
 hi	2
 three	3
-```
+--
 
 Τα αποτελέσματα του αρχείου είναι σωστά και λογικά.
 
-## DF
+== DF
 
 Ο αλγόριθμος DF είναι ένας αλγόριθμος της Ανάκτησης Πληροφορίας ο οποίος μετράει σε πόσα έγγραφα εμφανίζεται η κάθε λέξη. Όπως και στο παράδειγμα του WCount, έτσι και εδώ το πρόγραμμα του MapReducer χωρίζεται στα τρία. Ο Mapper είναι ίδιος με τον Mapper του TF.
 
-### Reducer
+=== Reducer
 
 Ο Reducer παρόλο που θυμίζει τον Reducer του WCount, έχουν μία μικρή διαφορά που αλλάζει ριζικά το πως δουλεύει.
 
-```java
+[source]
+--
 public class DFReducer extends MapReduceBase
         implements Reducer<Text, IntWritable, Text, IntWritable> {
     @Override
@@ -173,15 +196,16 @@ public class DFReducer extends MapReduceBase
         outputCollector.collect(text, new IntWritable(count));
     }
 }
-```
+--
 
 Ουσιαστικά στον runner, το combiner class επειδή θα τρέξει δεύτερη φόρα, θα πάρει τα δεδομένα από το reducer class και επιστρέψει στο τελικό αρχείο το σωστό αποτέλεσμα.
 
-### Ενδεικτικά τρεξίματα
+=== Ενδεικτικά τρεξίματα
 
 Για τα ενδεικτικά τρεξίματα, χρησιμοποιήθηκαν οι στίχοι τριών τραγουδιών, συγκεκριμένα το Roundabout των Yes, το Supper's Ready των Genesis και το Heroes του θρυλικού David Bowie.
 
-```text
+[source,text]
+--
 'n'	1
 A	1
 All	1
@@ -191,46 +215,49 @@ As	1
 Bacon	1
 Bang,	1
 ...
-```
+--
 
 Αυτά είναι τα οχτώ πρώτα αποτελέσματα που επέστρεψε το MapReduce. Βλέπουμε ότι όλες οι λέξεις εμφανίζονται σε ένα τραγούδι έκτος από το And που εμφανίζεται σε δύο.
 
-## TFI
+== TFI
 
 Το TFI είναι ένας αλγόριθμος της ανάκτησης πληροφορίας, όπου υπολογίζει τη συχνότητα εμφάνισης ενός όρου μέσα στο έγγραφο.
 
-:stem:
+image:img/tf_example.png[Τύπος, 200, 200]
 
-stem:[tf("this", d_1) = \frac{1}{5}]
 
 Αυτό σημαίνει ότι μέσα στο έγγραφο d1, το "this" εμφανίζεται μια φόρα στις 5 λέξεις και έχει συχνότητα 0.2.
 
-### Mapper
+=== Mapper
 
 Στην κλάση TFIMapper, αντιθέτως με τις προηγούμενες Mapper κλάσεις που αναλυθήκαν, είναι αρκετά διαφορετική. Καταρχάς, αυτή τη φόρα αντιστοιχεί Text με DoubleWritable, για τον λόγο ότι γίνεται διαίρεση στον Reducer.
 Για να υπολογίζει το tfi θα πρέπει κάπως να κρατάει πόσες λέξεις διάβασε συνολικά ανά αρχείο. Αυτό γίνεται με τον εξής τρόπο:
 
-```java
+[source]
+--
 public static HashMap<String, Integer> wordsCounted = new HashMap<>();
-```
+--
 
 Δημιουργείται, δηλαδή, μία HashMap η οποία αντιστοιχεί το όνομα του αρχείου με έναν αριθμό. Αυτό γίνεται σε αυτές τις γραμμές κωδικά.
 
-```java
+[source]
+--
 int count = wordsCounted.getOrDefault(fileName, 0);
 wordsCounted.put(fileName, count + 1);
-```
+--
 
 Αρχικά, με την εντολή getOrDefault(fileName, 0) ουσιαστικά κοιτάει το key του fileName, το οποίο είναι το αρχείο εισόδου που το παίρνει από αυτή τη γραμμή.
 
-```java
+[source]
+--
 var fileName = ((FileSplit)reporter.getInputSplit()).getPath().getName();
-```
+--
 
 Εάν, το key δεν έχει βρεθεί, επειδή είναι η πρώτη φορά που περνάει το αρχείο λογικά, τότε παίρνει την τιμή 0, διαφορετικά παίρνει το value του key στο map. Τέλος, φορτώνει το key στο Map και του αντιστοιχεί την τιμή count + 1. Αυτό, θεωρητικά θα του δώσει την τελική τιμή για το πόσες λέξεις έχει το έγγραφο μέσα του. Επιπλέον, αφού είναι public, σημαίνει ότι μπορεί να το δει και το Reducer αργότερα, με σκοπό να γίνουν σωστά οι υπολογισμοί.
 Εφόσον, αναλυθήκαν τα νέα δύσκολα τμήματα του κωδικά, από κάτω ακολουθείται ολόκληρος ο κώδικας.
 
-```java
+[source]
+--
 public class TFIMapper extends MapReduceBase
         implements Mapper<LongWritable, Text, Text, DoubleWritable> {
     private final static DoubleWritable one = new DoubleWritable(1.0f);
@@ -258,13 +285,14 @@ public class TFIMapper extends MapReduceBase
         }
     }
 }
-```
+--
 
-### Reducer
+=== Reducer
 
 Ο TFIReducer είναι παρόμοιος με το TFReducer. Υπάρχει μία διαφορά όμως.
 
-```java
+[source]
+--
 public class TFIReducer extends MapReduceBase
         implements Reducer<Text, DoubleWritable, Text, DoubleWritable> {
     @Override
@@ -282,49 +310,53 @@ public class TFIReducer extends MapReduceBase
                 text.toString().split(" ")[1]))); // Εδώ είναι η διαφορά
     }
 }
-```
+--
 
 Επειδή, δεν είναι ακριβώς ξεκάθαρο το πως δουλεύει, ας αναλυθεί τι κάνει η συγκεκριμένη εντολή:
 
-```java
+[source]
+--
 TFIMapper.wordsCounted.get(text.toString().split(" ")[1]);
-```
+--
 
 Όπως αναλύθηκε στο Mapper, το wordsCounted.get επιστρέφει την αντιστοιχημένη τιμή του key πίσω για επιπλέον πληροφορία. Επειδή, στο text, το Mapper προσθέτει και το όνομα του αρχείου στην αρχή, με το text.toString().split(" ")[1], αφαιρείται το όνομα του αρχείου, αφού χωρίζει το text αναλόγως του κενού και παίρνει το δεύτερο μέρος του που βρίσκεται η λέξη.
 
-### Ενδεικτικά τρεξίματα
+=== Ενδεικτικά τρεξίματα
 
 Αρχικά, για να επιβεβαιωθεί ότι δουλεύει σωστά ο αλγόριθμος, θα χρησιμοποιηθεί το αρχείο που είχε χρησιμοποιηθεί στο TF.
 
-```text
+[source,text]
+--
 hi bye hi three three three
-```
+--
 
 Ο θεωρητικός υπολογισμός τους είναι ο εξής:
 
-stem:[tf("hi", d) = \frac{2}{6} = 0.33]
+image:img/tf_source_1.png[Πρώτο παράδειγμα, 200, 200]
 
-stem:[tf("bye", d) = \frac{1}{6} = 0.16]
+image:img/tf_source_2.png[Δεύτερο παράδειγμα, 200, 200]
 
-stem:[tf("three", d) = \frac{3}{6} = 0.5]
+image:img/tf_source_3.png[Τρίτο παράδειγμα, 200, 200]
 
 Αφού εκτελεσθεί το αρχείο, για να θεωρηθεί σωστό, θα πρέπει να έχει αυτές τις τιμές.
 Στο αρχείο εξόδου, επιστρέφει τις εξής τιμές:
 
-```text
+[source,text]
+--
 bye simple_text.txt	0.1666666716337204
 hi simple_text.txt	0.3333333432674408
 three simple_text.txt	0.5
-```
+--
 
 Οπότε, μπορεί να σημειωθεί ότι ο αλγόριθμος είναι ορθός.
 
-### Ενδεικτικό τρέξιμο σε μεγάλη κλίμακα δεδομένων
+=== Ενδεικτικό τρέξιμο σε μεγάλη κλίμακα δεδομένων
 
 Μεγάλο ενδιαφέρον του αντικείμενου της ανάλυσης δεδομένων είναι να μπορεί ο αλγόριθμός να χρησιμοποιηθεί σε μία μεγάλου όγκου δεδομένων και όχι σε εκείνο το μικρό, ο οποίος αναλύθηκε μόνο για την επιβεβαίωση ορθότητας του αλγορίθμου.
 Για άλλη μια φόρα, θα αναλυθούν τα ίδια τρία τραγούδια που αναλύθηκαν και στο DF. Το αρχείο στην έξοδο επέστρεψε τα εξής δεδομένα:
 
-```text
+[source,text]
+--
 'n' roundabout.txt	0.010695187374949455
 A suppers_ready.txt	0.0021030493080615997
 All suppers_ready.txt	0.0010515246540307999
@@ -340,19 +372,20 @@ But heroes.txt	0.003759398590773344
 But suppers_ready.txt	0.0010515246540307999
 Call roundabout.txt	0.010695187374949455
 ...
-```
+--
 
 Παρότι οι πληροφορίες που επέστρεψε είναι ορθές, όμως θα μπορούσε να παρατηρήσει κανείς, επιστρέφονται σημεία στίξης, κεφαλαία κτλ που ίσως δε θα έπρεπε να υπήρχαν. Για να λυθεί αυτό το πρόβλημα στον πραγματικό κόσμο, θα πρέπει να καθαριστούν αυτά (με τη χρήση των κατάλληλων βιβλιοθηκών). Έτσι με αποτέλεσμα θα έχουμε μία πιο πραγματική προσέγγιση στην πραγματική τιμή της συχνότητας της λέξεως. Βεβαία, για τη συγκεκριμένη εργασία δεν υπάρχει λόγος να αναλυθεί πολύ, απλώς καλό είναι να αναφέρονται και να σημειώνονται αυτά.
 
-## MaxTFI
+== MaxTFI
 
 Το MaxTFI είναι μία προέκταση του TFI προγράμματος. Σκοπός του είναι να βρίσκει το μέγιστο TFI ένα όρου μέσα στα έγγραφα. Για παράδειγμα, άμα η λέξη "vision" έχει TFI 0.5 στο έγγραφο 1 και 0.6 στο έγγραφο 2, θα πρέπει να κρατάει το TFI του εγγράφου 2.
 
-### Mapper
+=== Mapper
 
 Ο Mapper του MaxTFI είναι αρκετά ενδιαφέρον επειδή σχεδιάστηκε με το σκεπτικό ότι θα χρησιμοποιήσει το έγγραφο εξόδου του TFI ως το έγγραφο εισόδου.
 
-```java
+[source]
+--
 public class MaxTFIMapper extends MapReduceBase
         implements Mapper<LongWritable, Text, Text, DoubleWritable> {
     @Override
@@ -365,22 +398,24 @@ public class MaxTFIMapper extends MapReduceBase
                 new DoubleWritable(Double.parseDouble(line[1])));
     }
 }
-```
+--
 
 Ουσιαστικά, σπάει τη γραμμή στα δύο και κρατάει τον όρο και τη συχνότητα TFI του. Δεν υπάρχει ενδιαφέρον στο να κρατηθεί η πληροφορία για το ποιο έγγραφο άνηκε κάποτε ο όρος.
 
-### Reducer
+=== Reducer
 
 Στην αρχή του reducer έχουμε αυτή την τιμή:
 
-```java
+[source]
+--
 var max = Double.MIN_VALUE;
-```
+--
 
 Όπου παίρνει αυτόματα την ελάχιστη τιμή που μπορεί να πάρει ένας αριθμός διπλής ακρίβειας.
 Ο υπόλοιπος reducer είναι αρκετά απλός. Κρατάει και καταγράφει μόνο τη μέγιστη συχνότητα TFI που έχει ο όρος σε οποιεσδήποτε έγγραφο.
 
-```java
+[source]
+--
 public class MaxTFIReducer extends MapReduceBase
         implements Reducer<Text, DoubleWritable, Text, DoubleWritable> {
     @Override
@@ -400,13 +435,14 @@ public class MaxTFIReducer extends MapReduceBase
         outputCollector.collect(text, new DoubleWritable(max));
     }
 }
-```
+--
 
-### Ενδεικτικά τρεξίματα
+=== Ενδεικτικά τρεξίματα
 
 Για τα ενδεικτικά τρεξίματα του MaxTFI, θα χρησιμοποιηθούν τα αποτελέσματα του TFI. Για να υπάρχει σημείο σύγκρισης με τα αποτελέσματα του MaxTFI, σημειώνονται από κάτω.
 
-```text
+[source,text]
+--
 'n' roundabout.txt	0.010695187374949455
 A suppers_ready.txt	0.0021030493080615997
 All suppers_ready.txt	0.0010515246540307999
@@ -422,11 +458,12 @@ But heroes.txt	0.003759398590773344
 But suppers_ready.txt	0.0010515246540307999
 Call roundabout.txt	0.010695187374949455
 ...
-```
+--
 
 Να σημειωθεί ότι στον όρο And στο τραγούδι heroes έχει συχνότητα TFI 0.02, ενώ στο supper's ready έχει 0.01, όποτε για να είναι ορθό η υλοποίηση του MaxTFI, θα πρέπει να κρατάει το 0.02 ως τιμή της συχνότητας.
 
-```text
+[source,text]
+--
 'n'	0.010695187374949455
 A	0.0021030493080615997
 All	0.0010515246540307999
@@ -445,6 +482,6 @@ Cause	0.003759398590773344
 Churchill	0.0010515246540307999
 Coming	0.0010515246540307999
 ...
-```
+--
 
 Όντως, το And έχει συχνότητα 0.02, όποτε ο αλγόριθμος έχει υλοποιηθεί σωστά.
